@@ -24,14 +24,15 @@ const DEFAULT_OPTIONS: TryRunOptions = {
 }
 
 const tryRun = async <T>(
-  promise: Promise<T> | Function,
+  promiseOrFun: Promise<T> | Function,
   options?: TryRunOptions
 ): Promise<TryRunResult<T>> => {
-  if (isPromise<T>(promise)) {
-    return runPromise(promise)
+
+  if (isPromise<T>(promiseOrFun)) {
+    return runPromise(promiseOrFun)
   }
 
-  if (typeof promise === 'function') {
+  if (typeof promiseOrFun === 'function') {
     const { retryTime = 0, timeOut = 500 } = {
       ...DEFAULT_OPTIONS,
       ...options
@@ -45,7 +46,7 @@ const tryRun = async <T>(
 
     while (currentTime <= retryTime && !isSuccess) {
       try {
-        result = await promise()
+        result = await promiseOrFun()
         isSuccess = true
       } catch (err) {
         error = err
@@ -56,7 +57,7 @@ const tryRun = async <T>(
     return isSuccess ? { result } : { error }
   }
 
-  return { error: new Error('promise paras must is function or promise') }
+  return { error: new Error('first params must is a function or promise') }
 }
 
 export {
