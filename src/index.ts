@@ -6,8 +6,8 @@ interface TryRunResult<T> {
 }
 
 interface TryRunOptions {
-  retryTime: number
-  timeOut: number
+  retryTime?: number
+  timeOut?: number
 }
 
 const runPromise = <T, U = Error>(
@@ -18,29 +18,36 @@ const runPromise = <T, U = Error>(
     .catch((error: U) => ({ error }))
 }
 
+const DEFAULT_OPTIONS: TryRunOptions = {
+  retryTime: 0,
+  timeOut: 500
+}
 
 const tryRun = async <T>(
   promise: Promise<T> | Function,
-  options: TryRunOptions
+  options?: TryRunOptions
 ): Promise<TryRunResult<T>> => {
   if (isPromise<T>(promise)) {
     return runPromise(promise)
   }
 
   if (typeof promise === 'function') {
-    const { retryTime, timeOut } = options
+    const { retryTime = 0, timeOut = 500 } = {
+      ...DEFAULT_OPTIONS,
+      ...options
+    }
 
     let currentTime: number = 0
     let isSuccess: boolean = false
-  
+
     let result
     let error
 
-    while (currentTime < retryTime && !isSuccess) {
+    while (currentTime <= retryTime && !isSuccess) {
       try {
         result = await promise()
         isSuccess = true
-      } catch(err) {
+      } catch (err) {
         error = err
         currentTime++
         await sleep(timeOut)
