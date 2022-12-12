@@ -1,4 +1,4 @@
-import { isPromise, sleep } from "./utils"
+import { DEFAULT_TIMEOUT, isPromise, sleep } from "./utils"
 
 interface TryRunResult<T> {
   result?: T
@@ -7,7 +7,7 @@ interface TryRunResult<T> {
 
 interface TryRunOptions {
   retryTime?: number
-  timeOut?: number
+  timeout?: number | ((time: number) => number)
 }
 
 const runPromise = <T, U = Error>(
@@ -20,7 +20,7 @@ const runPromise = <T, U = Error>(
 
 const DEFAULT_OPTIONS: TryRunOptions = {
   retryTime: 0,
-  timeOut: 500
+  timeout: DEFAULT_TIMEOUT
 }
 
 const tryRun = async <T>(
@@ -33,7 +33,7 @@ const tryRun = async <T>(
   }
 
   if (typeof promiseOrFun === 'function') {
-    const { retryTime = 0, timeOut = 500 } = {
+    const { retryTime = 0, timeout = DEFAULT_TIMEOUT } = {
       ...DEFAULT_OPTIONS,
       ...options
     }
@@ -51,7 +51,17 @@ const tryRun = async <T>(
       } catch (err) {
         error = err
         currentTime++
-        await sleep(timeOut)
+      
+        if (retryTime > 0) {
+          let finalTimeout: number = typeof timeout === 'number' ? timeout : 0
+          if (typeof timeout === 'function') {
+            finalTimeout = timeout(currentTime)
+          }
+          if (typeof finalTimeout !== 'number') {
+            finalTimeout = DEFAULT_TIMEOUT
+          }
+          await sleep(finalTimeout)
+        }
       }
     }
     return isSuccess ? { result } : { error }
