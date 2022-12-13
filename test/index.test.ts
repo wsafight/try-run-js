@@ -1,5 +1,6 @@
 import {
-  tryRun
+  tryRun,
+  setReturnType
 } from '../src/index'
 
 describe('try-run-js', () => {
@@ -22,7 +23,7 @@ describe('try-run-js', () => {
 
   it('retry Promise', async () => {
     let index = 1
-    const { result } = await tryRun(() => {
+    const { result } = await tryRun<any>(() => {
       index++;
       if (index === 3) {
         return Promise.resolve(222)
@@ -70,4 +71,69 @@ describe('try-run-js', () => {
     })
     expect(result).toEqual('success');
   })
+
+  it('tuple', async () => {
+    let time = 0
+    const [_error, result] =  await tryRun(() => {
+      time++
+      if (time === 4) {
+        return 'success'
+      } else {
+        throw new Error('hahah')
+      }
+    }, {
+      retryTime: 3,
+      returnType: 'tuple'
+    })
+    expect(result).toEqual('success');
+  })
+
+  it('tuple', async () => {
+    let time = 0
+    const [error, _result] =  await tryRun(() => {
+      time++
+      if (time === 6) {
+        return 'success'
+      } else {
+        throw new Error('hahah')
+      }
+    }, {
+      retryTime: 3,
+      returnType: 'tuple'
+    })
+    expect(error).toEqual(new Error('hahah'));
+  })
+
+  it('global tuple', async () => {
+    setReturnType("tuple")
+    let time = 0
+    const [error] =  await tryRun(() => {
+      time++
+      if (time === 6) {
+        return 'success'
+      } else {
+        throw new Error('hahah')
+      }
+    }, {
+      retryTime: 0,
+    })
+    expect(error).toEqual(new Error('hahah'));
+  })
+
+  // it('global tuple', async () => {
+  //   setReturnType("tuple")
+  //   let time = 0
+  //   const {error} =  await tryRun(() => {
+  //     time++
+  //     if (time === 6) {
+  //       return 'success'
+  //     } else {
+  //       throw new Error('hahah')
+  //     }
+  //   }, {
+  //     retryTime: 0,
+  //     returnType: 'record'
+  //   })
+  //   expect(error).toEqual(new Error('hahah'));
+  // })
 })

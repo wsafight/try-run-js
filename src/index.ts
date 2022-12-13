@@ -1,4 +1,8 @@
-import { getReturnType, ReturnType } from "./return-type"
+import {
+  getReturnType,
+  ReturnType,
+  setReturnType
+} from "./return-type"
 import { DEFAULT_TIMEOUT, isPromise, sleep } from "./utils"
 
 interface TryRunResultRecord<T> {
@@ -25,7 +29,7 @@ const runPromise = <T>(
         return { result: data } as TryRunResultRecord<T>
       }
     })
-    .catch((error) => {
+    .catch((error: Error) => {
       if (returnType === 'tuple') {
         return [error, undefined] as TryRunResultTuple<T>
       } else {
@@ -42,7 +46,7 @@ const DEFAULT_OPTIONS: TryRunOptions = {
 const tryRun = async <T>(
   promiseOrFun: Promise<T> | Function,
   options?: TryRunOptions
-): Promise<TryRunResultRecord<T> | TryRunResultTuple<T>> => {
+): Promise<any> => {
 
   const runParamIsPromise = isPromise(promiseOrFun)
   const runParamIsFun = typeof promiseOrFun === 'function'
@@ -50,10 +54,13 @@ const tryRun = async <T>(
   let { returnType } = options || {}
 
   if (!returnType) {
+    console.log('abc', getReturnType())
     returnType = getReturnType() || 'record'
   }
 
-  if (!runParamIsFun || !runParamIsPromise) {
+  const isTupleResult: boolean = returnType === 'tuple'
+
+  if (!runParamIsFun && !runParamIsPromise) {
     const paramsError = new Error('first params must is a function or promise')
     if (returnType === 'tuple') {
       return [paramsError, undefined] as TryRunResultTuple<T>
@@ -75,14 +82,14 @@ const tryRun = async <T>(
   let isSuccess: boolean = false
 
   let result
-  let error
+  let error: Error
 
   while (currentTime <= retryTime && !isSuccess) {
     try {
       result = await promiseOrFun()
       isSuccess = true
     } catch (err) {
-      error = err
+      error = err as Error
       currentTime++
 
       if (retryTime > 0) {
@@ -99,22 +106,15 @@ const tryRun = async <T>(
   }
 
   if (isSuccess) {
-
-  } else {
-
+    return isTupleResult ? [null, result] : { result }
   }
-  // if (returnType === 'tuple') {
-  //   return  as TryRunResultTuple<T>
-  // } else {
-  //   return isSuccess ? { result } : { error }) as TryRunResultRecord<T>
-  // }
 
-
-
+  return isTupleResult ? [error!, undefined] : { error: error! }
 }
 
 export {
-  tryRun
+  tryRun,
+  setReturnType
 }
 
 export default tryRun
