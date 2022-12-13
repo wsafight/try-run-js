@@ -54,7 +54,6 @@ const tryRun = async <T>(
   let { returnType } = options || {}
 
   if (!returnType) {
-    console.log('abc', getReturnType())
     returnType = getReturnType() || 'record'
   }
 
