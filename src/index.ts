@@ -1,21 +1,37 @@
+import { getReturnType, ReturnType } from "./return-type"
 import { DEFAULT_TIMEOUT, isPromise, sleep } from "./utils"
 
-interface TryRunResult<T> {
+interface TryRunResultRecord<T> {
   result?: T
-  error?: any
+  error?: Error
 }
 
+type TryRunResultTuple<T> = [Error, undefined] | [null, T]
 interface TryRunOptions {
   retryTime?: number
   timeout?: number | ((time: number) => number)
+  returnType?: ReturnType
 }
 
-const runPromise = <T, U = Error>(
+const runPromise = <T>(
   promise: Promise<T>,
-): Promise<TryRunResult<T>> => {
+  returnType: ReturnType
+): Promise<TryRunResultRecord<T> | TryRunResultTuple<T>> => {
   return promise
-    .then((data: T) => ({ result: data }))
-    .catch((error: U) => ({ error }))
+    .then((data: T) => {
+      if (returnType === 'tuple') {
+        return [null, data] as TryRunResultTuple<T>
+      } else {
+        return { result: data } as TryRunResultRecord<T>
+      }
+    })
+    .catch((error) => {
+      if (returnType === 'tuple') {
+        return [error, undefined] as TryRunResultTuple<T>
+      } else {
+        return { error } as TryRunResultRecord<T>
+      }
+    })
 }
 
 const DEFAULT_OPTIONS: TryRunOptions = {
@@ -26,48 +42,75 @@ const DEFAULT_OPTIONS: TryRunOptions = {
 const tryRun = async <T>(
   promiseOrFun: Promise<T> | Function,
   options?: TryRunOptions
-): Promise<TryRunResult<T>> => {
+): Promise<TryRunResultRecord<T> | TryRunResultTuple<T>> => {
 
-  if (isPromise<T>(promiseOrFun)) {
-    return runPromise(promiseOrFun)
+  const runParamIsPromise = isPromise(promiseOrFun)
+  const runParamIsFun = typeof promiseOrFun === 'function'
+
+  let { returnType } = options || {}
+
+  if (!returnType) {
+    returnType = getReturnType() || 'record'
   }
 
-  if (typeof promiseOrFun === 'function') {
-    const { retryTime = 0, timeout = DEFAULT_TIMEOUT } = {
-      ...DEFAULT_OPTIONS,
-      ...options
+  if (!runParamIsFun || !runParamIsPromise) {
+    const paramsError = new Error('first params must is a function or promise')
+    if (returnType === 'tuple') {
+      return [paramsError, undefined] as TryRunResultTuple<T>
     }
+    return { error: paramsError } as TryRunResultRecord<T>
+  }
 
-    let currentTime: number = 0
-    let isSuccess: boolean = false
+  const { retryTime = 0, timeout = DEFAULT_TIMEOUT } = {
+    ...DEFAULT_OPTIONS,
+    ...options
+  }
 
-    let result
-    let error
+  if (runParamIsPromise) {
+    return runPromise(promiseOrFun as Promise<T>, returnType)
+  }
 
-    while (currentTime <= retryTime && !isSuccess) {
-      try {
-        result = await promiseOrFun()
-        isSuccess = true
-      } catch (err) {
-        error = err
-        currentTime++
-      
-        if (retryTime > 0) {
-          let finalTimeout: number = typeof timeout === 'number' ? timeout : 0
-          if (typeof timeout === 'function') {
-            finalTimeout = timeout(currentTime)
-          }
-          if (typeof finalTimeout !== 'number') {
-            finalTimeout = DEFAULT_TIMEOUT
-          }
-          await sleep(finalTimeout)
+
+  let currentTime: number = 0
+  let isSuccess: boolean = false
+
+  let result
+  let error
+
+  while (currentTime <= retryTime && !isSuccess) {
+    try {
+      result = await promiseOrFun()
+      isSuccess = true
+    } catch (err) {
+      error = err
+      currentTime++
+
+      if (retryTime > 0) {
+        let finalTimeout: number = typeof timeout === 'number' ? timeout : 0
+        if (typeof timeout === 'function') {
+          finalTimeout = timeout(currentTime)
         }
+        if (typeof finalTimeout !== 'number') {
+          finalTimeout = DEFAULT_TIMEOUT
+        }
+        await sleep(finalTimeout)
       }
     }
-    return isSuccess ? { result } : { error }
   }
 
-  return { error: new Error('first params must is a function or promise') }
+  if (isSuccess) {
+
+  } else {
+
+  }
+  // if (returnType === 'tuple') {
+  //   return  as TryRunResultTuple<T>
+  // } else {
+  //   return isSuccess ? { result } : { error }) as TryRunResultRecord<T>
+  // }
+
+
+
 }
 
 export {
