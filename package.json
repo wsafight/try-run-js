@@ -1,7 +1,7 @@
 {
   "name": "try-run-js",
   "author": "wsafight",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
