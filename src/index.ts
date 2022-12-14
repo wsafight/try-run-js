@@ -90,7 +90,7 @@ const tryRun = async <T>(
     } catch (err) {
       error = err as Error
       currentTime++
-      if (retryTime > 0 && currentTime > retryTime) {
+      if (retryTime > 0 && currentTime <= retryTime) {
         let finalTimeout: number = typeof timeout === 'number' ? timeout : 0
         if (typeof timeout === 'function') {
           finalTimeout = timeout(currentTime)

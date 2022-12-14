@@ -104,6 +104,6 @@ setReturnType("record");
 ```
 
 ## Changelog
-- 0.0.6 Fixed a bug that would also wait after the last retry
+- 0.0.7 Fixed a bug that would also wait after the last retry
 - 0.0.5 complete docs
 - 0.0.4 To complete the basic functions, the function can be used in places that may go wrong and need to be retried
