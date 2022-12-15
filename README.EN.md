@@ -23,10 +23,9 @@ yarn install try-run-js
 | promiseOrFun       | promise or function    | Function ｜ Promsie | -                        |
 | options.retryTime  | number of retries        | number             | 0                        |
 | options.timeout    | Timeout or timeout function (the parameter is the number of retries) | number             | (time: number) => number |
-| options.returnType | returned data type   | 'tuple'｜ 'record'  | 'record'                 |
 
 ```ts
-import tryRun from "try-run-js";
+import tryRun, { tryRunForTuple } from "try-run-js";
 
 const { result } = await tryRun(Promise.resolve(12));
 // => result 12
@@ -35,15 +34,10 @@ const { error } = await tryRun(Promise.reject(12));
 // => error 12
 
 // The first is the error, the second is the result
-const [_error, tupleResult] = await tryRun(Promise.resolve(12), {
-  // Return information as a tuple
-  returnType: "tuple",
-});
+const [_error, tupleResult] = await tryRunForTuple(Promise.resolve(12));
 // => tupleResult 12
 
-const [tupleError, _tupleResult] = await tryRun(Promise.reject(12), {
-  returnType: "tuple",
-});
+const [tupleError, _tupleResult] = await tryRunForTuple(Promise.reject(12));
 // => tupleError 12
 ```
 
@@ -59,7 +53,7 @@ const { result } = await tryRun<any>(() => {
 }, {
   retryTime: 3,
 });
-expect(result).toEqual(222);
+// 222
 
 const options = {
   // retry 3 times
@@ -90,20 +84,8 @@ if (error) {
 styleResult;
 ```
 
-### setReturnType function set return type
-
-```ts
-import { setReturnType } from "try-run-js";
-// Will be replaced by function configuration
-
-// Use tuples globally
-setReturnType("tuple");
-
-// global use record
-setReturnType("record");
-```
-
 ## Changelog
+- 0.0.8 Remove the return type setting and separate it into two functions tryRun and tryRunForTuple
 - 0.0.7 Fixed a bug that would also wait after the last retry
 - 0.0.5 complete docs
 - 0.0.4 To complete the basic functions, the function can be used in places that may go wrong and need to be retried

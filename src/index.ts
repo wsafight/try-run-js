@@ -1,8 +1,3 @@
-import {
-  getReturnType,
-  ReturnType,
-  setReturnType
-} from "./return-type"
 import { DEFAULT_TIMEOUT, isPromise, sleep } from "./utils"
 
 interface TryRunResultRecord<T> {
@@ -10,31 +5,21 @@ interface TryRunResultRecord<T> {
   error?: Error
 }
 
-type TryRunResultTuple<T> = [Error, undefined] | [null, T]
+type TryRunResultTuple<T> = [any, undefined] | [null, T]
 interface TryRunOptions {
   retryTime?: number
   timeout?: number | ((time: number) => number)
-  returnType?: ReturnType
 }
 
 const runPromise = <T>(
   promise: Promise<T>,
-  returnType: ReturnType
-): Promise<TryRunResultRecord<T> | TryRunResultTuple<T>> => {
+): Promise<TryRunResultRecord<T>> => {
   return promise
     .then((data: T) => {
-      if (returnType === 'tuple') {
-        return [null, data] as TryRunResultTuple<T>
-      } else {
-        return { result: data } as TryRunResultRecord<T>
-      }
+      return { result: data } as TryRunResultRecord<T>
     })
     .catch((error: Error) => {
-      if (returnType === 'tuple') {
-        return [error, undefined] as TryRunResultTuple<T>
-      } else {
-        return { error } as TryRunResultRecord<T>
-      }
+      return { error } as TryRunResultRecord<T>
     })
 }
 
@@ -46,24 +31,13 @@ const DEFAULT_OPTIONS: TryRunOptions = {
 const tryRun = async <T>(
   promiseOrFun: Promise<T> | Function,
   options?: TryRunOptions
-): Promise<any> => {
+): Promise<TryRunResultRecord<T>> => {
 
   const runParamIsPromise = isPromise(promiseOrFun)
   const runParamIsFun = typeof promiseOrFun === 'function'
 
-  let { returnType } = options || {}
-
-  if (!returnType) {
-    returnType = getReturnType() || 'record'
-  }
-
-  const isTupleResult: boolean = returnType === 'tuple'
-
   if (!runParamIsFun && !runParamIsPromise) {
     const paramsError = new Error('first params must is a function or promise')
-    if (returnType === 'tuple') {
-      return [paramsError, undefined] as TryRunResultTuple<T>
-    }
     return { error: paramsError } as TryRunResultRecord<T>
   }
 
@@ -73,7 +47,7 @@ const tryRun = async <T>(
   }
 
   if (runParamIsPromise) {
-    return runPromise(promiseOrFun as Promise<T>, returnType)
+    return runPromise(promiseOrFun as Promise<T>)
   }
 
 
@@ -104,15 +78,27 @@ const tryRun = async <T>(
   }
 
   if (isSuccess) {
-    return isTupleResult ? [null, result] : { result }
+    return { result }
   }
 
-  return isTupleResult ? [error!, undefined] : { error: error! }
+  return { error: error! }
+}
+
+const tryRunForTuple = <T>(
+  promiseOrFun: Promise<T> | Function,
+  options?: TryRunOptions): Promise<TryRunResultTuple<T>> => {
+  return tryRun<T>(promiseOrFun, options).then(res => {
+    const { result, error } = res
+    if (error) {
+      return [error, undefined] as [any, undefined]
+    }
+    return [null, result] as [null, T]
+  })
 }
 
 export {
-  tryRun,
-  setReturnType
+  tryRunForTuple,
+  tryRun
 }
 
 export default tryRun

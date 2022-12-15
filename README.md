@@ -29,10 +29,9 @@ yarn install try-run-js
 | promiseOrFun       | promsie 或者函数       | Function ｜ Promsie | -                        |
 | options.retryTime  | 重试次数               | number             | 0                        |
 | options.timeout    | 超时时间或超时函数（参数为重试次数） | number             | (time: number) => number |
-| options.returnType | 返回的数据类型            | 'tuple'｜ 'record'  | 'record'                 |
 
 ```ts
-import tryRun from "try-run-js";
+import tryRun, { tryRunForTuple } from "try-run-js";
 
 const { result } = await tryRun(Promise.resolve(12));
 // => result 12
@@ -41,15 +40,12 @@ const { error } = await tryRun(Promise.reject(12));
 // => error 12
 
 // 第一个为错误，第二个是结果
-const [_error, tupleResult] = await tryRun(Promise.resolve(12), {
+const [_error, tupleResult] = await tryRunForTuple(Promise.resolve(12), {
   // 返回信息为元组
-  returnType: "tuple",
 });
 // => tupleResult 12
 
-const [tupleError, _tupleResult] = await tryRun(Promise.reject(12), {
-  returnType: "tuple",
-});
+const [tupleError, _tupleResult] = await tryRunForTuple(Promise.reject(12));
 // => tupleError 12
 ```
 
@@ -65,7 +61,7 @@ const { result } = await tryRun<any>(() => {
 }, {
   retryTime: 3,
 });
-expect(result).toEqual(222);
+// 222
 
 const options = {
   // 重试 3 次
@@ -96,20 +92,8 @@ if (error) {
 styleResult;
 ```
 
-### setReturnType 函数设置返回类型
-
-```ts
-import { setReturnType } from "try-run-js";
-// 会被函数配置替代
-
-// 全局使用元组
-setReturnType("tuple");
-
-// 全局使用对象
-setReturnType("record");
-```
-
 ## 升级日志
-- 0.0.6 修复最后一次重试后也会等待的 bug
+- 0.0.8 去除 return-type 设置，分离为 tryRun 和 tryRunForTuple 两个函数
+- 0.0.7 修复最后一次重试后也会等待的 bug
 - 0.0.5 完成文档
 - 0.0.4 完成基本功能，函数可以用在可能出错的地方需要重试的地方
