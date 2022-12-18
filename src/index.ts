@@ -2,7 +2,7 @@ import { DEFAULT_TIMEOUT, isPromise, sleep } from "./utils"
 
 interface TryRunResultRecord<T> {
   result?: T
-  error?: Error
+  error?: Error | null
 }
 
 type TryRunResultTuple<T> = [any, undefined] | [null, T]
@@ -84,10 +84,10 @@ const tryRun = async <T>(
   }
 
   if (isSuccess) {
-    return { result }
+    return { result, error: null }
   }
 
-  return { error: error! }
+  return { error: error!, result: undefined }
 }
 
 const tryRunForTuple = <T>(

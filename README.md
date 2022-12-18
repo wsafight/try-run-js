@@ -102,6 +102,7 @@ styleResult;
 ```
 
 ## 升级日志
+- 0.0.10 tryRun 函数出错时返回值设定为 null
 - 0.0.9 添加 timeout 可以返回 Promise
 - 0.0.8 去除 return-type 设置，分离为 tryRun 和 tryRunForTuple 两个函数
 - 0.0.7 修复最后一次重试后也会等待的 bug

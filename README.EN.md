@@ -94,6 +94,7 @@ styleResult;
 ```
 
 ## Changelog
+- 0.0.10 The return value of the tryRun function is set to null on error
 - 0.0.9 Add timeout to return Promise
 - 0.0.8 Remove the return type setting and separate it into two functions tryRun and tryRunForTuple
 - 0.0.7 Fixed a bug that would also wait after the last retry
