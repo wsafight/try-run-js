@@ -28,7 +28,7 @@ yarn install try-run-js
 | :----------------- | :----------------- | :----------------- | :----------------------- |
 | promiseOrFun       | promsie 或者函数       | Function ｜ Promsie | -                        |
 | options.retryTime  | 重试次数               | number             | 0                        |
-| options.timeout    | 超时时间或超时函数（参数为重试次数） | number             | (time: number) => number |
+| options.timeout    | 超时时间或超时函数（参数为重试次数） | number  ｜(time: number) => number  ｜ time: number) => Promise<any>  | 333 |
 
 ```ts
 import tryRun, { tryRunForTuple } from "try-run-js";
@@ -71,10 +71,19 @@ const options = {
 };
 
 // 也可以传递函数
-options.timeout = (time: number) => {
+options.timeout = (time: number): number => {
   // 当前第几次重试 * 1000
   // 第一次 1000，第二次 2000，依此类推
   return time * 1000;
+};
+
+// 也可以使用异步函数
+options.timeout =  (time: number) => {
+  return new Promise(resolve => [
+    requestAnimationFrame(() => {
+      resolve()
+    })
+  ])
 };
 
 const { result: styleResult, error } = await tryRun(() => {
@@ -93,6 +102,7 @@ styleResult;
 ```
 
 ## 升级日志
+- 0.0.9 添加 timeout 可以返回 Promise
 - 0.0.8 去除 return-type 设置，分离为 tryRun 和 tryRunForTuple 两个函数
 - 0.0.7 修复最后一次重试后也会等待的 bug
 - 0.0.5 完成文档

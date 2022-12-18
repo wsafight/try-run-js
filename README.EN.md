@@ -22,7 +22,7 @@ yarn install try-run-js
 | :----------------- | :----------------- | :----------------- | :----------------------- |
 | promiseOrFun       | promise or function    | Function ｜ Promsie | -                        |
 | options.retryTime  | number of retries        | number             | 0                        |
-| options.timeout    | Timeout or timeout function (the parameter is the number of retries) | number             | (time: number) => number |
+| options.timeout    | Timeout or timeout function (the parameter is the number of retries) | number  ｜(time: number) => number  ｜ time: number) => Promise<any>  | 333 |
 
 ```ts
 import tryRun, { tryRunForTuple } from "try-run-js";
@@ -69,6 +69,15 @@ options.timeout = (time: number) => {
   return time * 1000;
 };
 
+// You can also use async functions
+options.timeout =  (time: number) => {
+  return new Promise(resolve => [
+    requestAnimationFrame(() => {
+      resolve()
+    })
+  ])
+};
+
 const { result: styleResult, error } = await tryRun(() => {
   const dom = document.getElementById("ppt");
   // If the dom node does not exist, an error will be reported at this time, and the function has an error retry mechanism
@@ -85,6 +94,7 @@ styleResult;
 ```
 
 ## Changelog
+- 0.0.9 Add timeout to return Promise
 - 0.0.8 Remove the return type setting and separate it into two functions tryRun and tryRunForTuple
 - 0.0.7 Fixed a bug that would also wait after the last retry
 - 0.0.5 complete docs

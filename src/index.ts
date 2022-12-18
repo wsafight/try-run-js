@@ -8,7 +8,7 @@ interface TryRunResultRecord<T> {
 type TryRunResultTuple<T> = [any, undefined] | [null, T]
 interface TryRunOptions {
   retryTime?: number
-  timeout?: number | ((time: number) => number)
+  timeout?: number | ((time: number) => number | Promise<any>)
 }
 
 const runPromise = <T>(
@@ -65,14 +65,20 @@ const tryRun = async <T>(
       error = err as Error
       currentTime++
       if (retryTime > 0 && currentTime <= retryTime) {
-        let finalTimeout: number = typeof timeout === 'number' ? timeout : 0
+        let finalTimeout: number | Promise<any> = typeof timeout === 'number' ? timeout : 0
         if (typeof timeout === 'function') {
           finalTimeout = timeout(currentTime)
         }
-        if (typeof finalTimeout !== 'number') {
-          finalTimeout = DEFAULT_TIMEOUT
+
+        if (isPromise(finalTimeout)) {
+          await finalTimeout
+        } else {
+          if (typeof finalTimeout !== 'number') {
+            finalTimeout = DEFAULT_TIMEOUT
+          }
+          await sleep(finalTimeout)
         }
-        await sleep(finalTimeout)
+
       }
     }
   }
