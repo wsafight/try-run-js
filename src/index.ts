@@ -41,15 +41,14 @@ const tryRun = async <T>(
     return { error: paramsError } as TryRunResultRecord<T>
   }
 
-  const { retryTime = 0, timeout = DEFAULT_TIMEOUT } = {
-    ...DEFAULT_OPTIONS,
-    ...options
-  }
-
   if (runParamIsPromise) {
     return runPromise(promiseOrFun as Promise<T>)
   }
 
+  const { retryTime = 0, timeout = DEFAULT_TIMEOUT } = {
+    ...DEFAULT_OPTIONS,
+    ...options
+  }
 
   let currentTime: number = 0
   let isSuccess: boolean = false
