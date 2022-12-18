@@ -94,6 +94,7 @@ styleResult;
 ```
 
 ## Changelog
+- 0.0.12 Fix default value error
 - 0.0.11 Code optimization
 - 0.0.10 The return value of the tryRun function is set to null on error
 - 0.0.9 Add timeout to return Promise
